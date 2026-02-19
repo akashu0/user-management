@@ -25,7 +25,7 @@ const UserManagementPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState("all");
 
-    const [userForm, setUserForm] = useState<{ isOpen: boolean; mode: 'add' | 'edit'; data: User | null }>({
+    const [userForm, setUserForm] = useState<{ isOpen: boolean; mode: 'add' | 'edit'; data: string | null }>({
         isOpen: false,
         mode: 'add',
         data: null
@@ -36,34 +36,38 @@ const UserManagementPage = () => {
     const [userToDelete, setUserToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const fetchUsers = async () => {
+        try {
+            const data = await userService.getUsers(statusFilter);
+            setUsers(data);
+        } catch (error) {
+            console.error('Failed to fetch users', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const data = await userService.getUsers(statusFilter);
-                setUsers(data);
-            } catch (error) {
-                console.error('Failed to fetch users', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+
         fetchUsers();
     }, [statusFilter]);
 
-    const handleSaveUser = async (formData: any) => {
+    const handleSaveUser = async (formData: any, userId?: string | null) => {
         try {
             if (userForm.mode === 'add') {
-                const newUser = await userService.createUser(formData);
-                setUsers([newUser, ...users]);
+                await userService.createUser(formData);
+                fetchUsers();
                 toast.success("User created successfully");
             } else {
-                const updatedUser = await userService.updateUser(
-                    userForm.data!.id,
-                    formData
+                if (!userId) {
+                    toast.error("User ID is required for update");
+                    return;
+                }
+                await userService.updateUser(
+                    formData,
+                    userId
                 );
-                setUsers(users.map(u =>
-                    u.id === updatedUser.id ? updatedUser : u
-                ));
+                fetchUsers();
                 toast.success("User updated successfully");
             }
         } catch (error: any) {
@@ -212,22 +216,22 @@ const UserManagementPage = () => {
                                     <div className="col-span-1 text-xs font-bold text-gray-400">
                                         {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + idx + 1}
                                     </div>
-                                    <div className="col-span-1 text-sm font-medium text-[#3D3462]">{user.name}</div>
+                                    <div className="col-span-1 text-sm font-medium text-[#3D3462]">{user?.name}</div>
                                     <div className="col-span-2 text-sm text-gray-500 font-medium line-clamp-1 break-all pr-2" title={user.email}>{user.email}</div>
                                     <div className="col-span-1 text-sm text-gray-500 font-medium">{user.initials || '--'}</div>
                                     <div className="col-span-2 text-sm text-gray-500 font-medium">{user.phoneNumber || '--'}</div>
-                                    <div className="col-span-1 text-sm font-medium text-gray-500 tracking-tight">{user.role}</div>
+                                    <div className="col-span-1 text-sm font-medium text-gray-500 tracking-tight">{user.role?.title || '--'}</div>
                                     <div className="col-span-1">
                                         <button
                                             onClick={() => handleToggleStatus(user.id, user.status)}
-                                            className={cn("relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none", user.status ? 'bg-[#7C5DFA]' : 'bg-gray-200')}
+                                            className={cn("relative inline-flex h-5 w-10 items-center cursor-pointer rounded-full transition-colors focus:outline-none", user.status ? 'bg-[#7C5DFA]' : 'bg-gray-200')}
                                         >
                                             <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform", user.status ? 'translate-x-5.5' : 'translate-x-1')} />
                                         </button>
                                     </div>
                                     <div className="col-span-2 text-sm text-gray-500 font-medium truncate">{user.title || '--'}</div>
                                     <div className="col-span-1 flex justify-end gap-1">
-                                        <button onClick={() => setUserForm({ isOpen: true, mode: 'edit', data: user })} className="text-blue-500 hover:bg-blue-50 p-2 cursor-pointer rounded-lg transition-all">
+                                        <button onClick={() => setUserForm({ isOpen: true, mode: 'edit', data: user.id })} className="text-blue-500 hover:bg-blue-50 p-2 cursor-pointer rounded-lg transition-all">
                                             <Edit2 size={16} />
                                         </button>
                                         <button onClick={() => handleDeleteClick(user.id)} className="text-red-500 hover:bg-red-50 p-2 cursor-pointer rounded-lg transition-all">
@@ -260,7 +264,7 @@ const UserManagementPage = () => {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDelete}
-                // title="Delete User"
+                title="Delete User"
                 message="Are you sure you want to delete this user? This action cannot be undone."
                 isLoading={isDeleting}
             />
@@ -269,7 +273,7 @@ const UserManagementPage = () => {
             <UserFormModal
                 isOpen={userForm.isOpen}
                 mode={userForm.mode}
-                initialData={userForm.data}
+                userId={userForm.data}
                 onClose={() => setUserForm({ ...userForm, isOpen: false })}
                 onSave={handleSaveUser}
             />

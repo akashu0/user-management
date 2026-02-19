@@ -42,7 +42,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsC
                 cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group relative mb-1',
                     isActive
-                        ? 'bg-gradient-to-r from-[#7C5DFA] to-[#9277FF] text-white shadow-lg'
+                        ? 'bg-linear-to-r from-[#7C5DFA] to-[#9277FF] text-white shadow-lg'
                         : 'text-gray-300 hover:bg-[#4B4075] hover:text-white'
                 )
             }

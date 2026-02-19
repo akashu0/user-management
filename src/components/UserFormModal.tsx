@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, UserRound, X } from 'lucide-react';
-import type { User } from '../types';
+import { Camera, UserRound, Trash2 } from 'lucide-react';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import Input from './common/Input';
 import { cn } from '../lib/utils';
 import { userService } from '../services/userService';
+import { initialFormState } from '../types';
+import ConfirmModal from './common/ConfirmModal';
+import { toast } from 'sonner';
+
 
 interface UserFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (userData: any) => Promise<void>;
-    initialData?: User | null;
+    onSave: (data: any, userId?: string | null) => Promise<void>;
+    userId: string | null;
     mode: 'add' | 'edit';
 }
 
@@ -20,24 +23,37 @@ interface Responsibility {
     title: string;
 }
 
-const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, initialData, mode }) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        role: '',
-        title: '',
-        phone: '',
-        initials: '',
-        responsibilities: [] as string[],
-        user_picture: null as File | string | null, // Updated type
-    });
+
+
+const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, userId, mode }) => {
+    const [formData, setFormData] = useState(initialFormState);
 
     const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Added for UI preview
     const [availableResponsibilities, setAvailableResponsibilities] = useState<Responsibility[]>([]);
     const [availableRoles, setAvailableRoles] = useState<{ label: string, id: string }[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [confirmDeleteImage, setConfirmDeleteImage] = useState(false);
+    const [isDeletingImage, setIsDeletingImage] = useState(false);
+
+
+
+    useEffect(() => {
+        if (!isOpen) {
+            setFormData(initialFormState);
+            setPreviewUrl(null);
+
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ""; // 👈 THIS clears file input
+            }
+        }
+    }, [isOpen]);
+
+
+
+
+
 
     // Fetch Meta Data
     useEffect(() => {
@@ -56,26 +72,32 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
         if (isOpen) fetchMeta();
     }, [isOpen]);
 
-    // Sync Data when editing or adding
+    // Fetch user data if editing
     useEffect(() => {
-        if (mode === 'edit' && initialData) {
-            setFormData({
-                name: initialData.name || '',
-                email: initialData.email || '',
-                role: initialData.role || '',
-                title: initialData.title || '',
-                phone: initialData.phoneNumber || '',
-                responsibilities: initialData.responsibilities || [],
-                user_picture: initialData.user_picture || null, // Existing URL string
-                initials: initialData.initials || ''
-            });
-            setPreviewUrl(initialData.user_picture || null);
-        } else {
-            setFormData({ name: '', email: '', role: '', title: '', phone: '', initials: '', responsibilities: [], user_picture: null });
-            setPreviewUrl(null);
-        }
-        setErrors({});
-    }, [initialData, mode, isOpen]);
+        const fetchUserData = async () => {
+            if (mode === 'edit' && userId) {
+                try {
+                    const userData = await userService.getUserById(userId);
+                    setFormData({
+                        name: userData.first_name,
+                        email: userData.email || '',
+                        role: userData.role?.id || "",
+                        title: userData.title || '',
+                        phone: userData.phone || '',
+                        responsibilities: userData.responsibilities || [],
+                        user_picture: userData.profile_image_url || null, // Existing URL string
+                        initials: userData.initials || ''
+                    });
+                    setPreviewUrl(userData.profile_image_url || null);
+                } catch (err) {
+                    console.error("Failed to load user data", err);
+                }
+            }
+        };
+        if (isOpen) fetchUserData();
+    }, [userId, mode, isOpen]);
+
+
 
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -114,6 +136,24 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
         return Object.keys(newErrors).length === 0;
     };
 
+
+    const handleDeleteImage = async () => {
+        if (!userId) return;
+        setIsDeletingImage(true);
+        try {
+            await userService.deleteUserImage(userId);
+            setFormData(prev => ({ ...prev, user_picture: null }));
+            setPreviewUrl(null);
+            setConfirmDeleteImage(false);
+            toast.success('Image deleted successfully');
+        } catch (err: any) {
+            console.error('Failed to delete image', err);
+            toast.error(err.response.data.message);
+        } finally {
+            setIsDeletingImage(false);
+        }
+    };
+
     const handleCheckboxChange = (respId: string) => {
         setFormData(prev => {
             const isSelected = prev.responsibilities.includes(respId);
@@ -147,18 +187,24 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
         data.append('title', formData.title);
         data.append('phone', formData.phone);
         data.append('initials', formData.initials);
+        data.append('responsibilities', JSON.stringify(formData.responsibilities));
+        data.append('overwrite_data', '0');
 
-        formData.responsibilities.forEach((id) => {
-            data.append('responsibilities[]', id);
-        });
+        if (mode === 'edit') {
+            data.append('_method', 'PUT');
+        }
 
-        // Fixed type checking for File
         if (formData.user_picture && typeof formData.user_picture !== 'string') {
             data.append('user_picture', formData.user_picture as File);
         }
 
         try {
-            await onSave(data);
+            if (mode === 'edit') {
+                await onSave(data, userId);
+            } else {
+                await onSave(data);
+            }
+
             onClose();
         } catch (error) {
             console.error(error);
@@ -167,6 +213,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
         }
     };
 
+
     return (
         <Modal
             isOpen={isOpen}
@@ -174,7 +221,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
             title={mode === 'add' ? 'Add New User' : 'Edit User'}
             footer={
                 <div className="flex w-full px-2">
-                    <Button className="flex-1 rounded-xl h-12 bg-[#7C5DFA]" onClick={handleSubmit} isLoading={isLoading}>
+                    <Button className="flex-1 rounded-xl cursor-pointer h-12 bg-[#7C5DFA]" onClick={handleSubmit} isLoading={isLoading}>
                         {mode === "add" ? "Add New User" : "Save Changes"}
                     </Button>
                 </div>
@@ -194,20 +241,17 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
 
                         {previewUrl && (
                             <button
-                                onClick={() => {
-                                    setFormData({ ...formData, user_picture: null });
-                                    setPreviewUrl(null);
-                                }}
-                                className="absolute -top-1 -right-1 bg-white text-red-500 rounded-full p-1 shadow-md border border-gray-100 hover:bg-red-50 z-10"
+                                onClick={() => setConfirmDeleteImage(true)}
+                                className="absolute -top-1 -right-1 bg-white cursor-pointer text-red-500 rounded-full p-1 shadow-md border border-gray-100 hover:bg-red-50 z-10"
                             >
-                                <X size={14} strokeWidth={3} />
+                                <Trash2 size={14} strokeWidth={2.5} />
                             </button>
                         )}
 
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="absolute bottom-0 -right-1 bg-[#7C5DFA] text-white rounded-full p-1.5 shadow-lg border-2 border-white hover:bg-[#6c4de0]"
+                            className="absolute bottom-0 cursor-pointer -right-1 bg-[#7C5DFA] text-white rounded-full p-1.5 shadow-lg border-2 border-white hover:bg-[#6c4de0]"
                         >
                             <Camera size={14} />
                         </button>
@@ -293,7 +337,17 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                     </div>
                 </div>
             </div>
+            <ConfirmModal
+                isOpen={confirmDeleteImage}
+                onClose={() => setConfirmDeleteImage(false)}
+                onConfirm={handleDeleteImage}
+                message="Are you sure you want to delete this profile image?"
+                title="Delete Image"
+                isLoading={isDeletingImage}
+            />
         </Modal>
+
+
     );
 };
 

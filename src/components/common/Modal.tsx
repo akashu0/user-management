@@ -40,7 +40,7 @@ const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) => {
                     <h2 className="text-xl font-bold text-[#3D3462]">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                        className="rounded-full p-2 cursor-pointer text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
                     >
                         <X size={20} />
                     </button>

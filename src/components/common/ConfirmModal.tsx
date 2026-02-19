@@ -9,20 +9,21 @@ interface ConfirmModalProps {
     onConfirm: () => void;
     message: string;
     isLoading?: boolean;
+    title: string;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
     isOpen,
     onClose,
     onConfirm,
-
+    title,
     isLoading = false
 }) => {
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Delete User"
+            title={title}
             footer={
                 <div className="flex gap-3 bg-white w-full px-2">
                     <Button

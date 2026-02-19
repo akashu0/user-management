@@ -13,18 +13,28 @@ export const userService = {
 
         return response.data.data.map((u: any) => ({
             id: u.id,
-            name: `${u.first_name} ${u.last_name || ''}`.trim(),
+            name: u.first_name,
             email: u.email,
             initials: u.initials || u.first_name?.charAt(0) || '?',
             phoneNumber: u.phone,
             role: u.role?.title || 'No Role',
+            role_id: u.role?.id || 'No Role',
             status: u.status,
             title: u.title || '--'
         }));
     },
 
+    getUserById: async (id: string): Promise<User> => {
+        const response = await api.get(`/user/${id}`);
+        return response.data.data;
+    },
+
     createUser: async (userData: any): Promise<User> => {
-        const response = await api.post('/user', userData);
+        const response = await api.post('/user', userData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data.data;
     },
 
@@ -32,10 +42,15 @@ export const userService = {
         await api.post(`/user/${id}/status`, { status });
     },
 
-    updateUser: async (id: string, userData: any): Promise<User> => {
-        const response = await api.post(`/user/${id}`, userData);
+    updateUser: async (userData: any, id: string): Promise<User> => {
+        const response = await api.post(`/user/${id}`, userData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data.data;
     },
+
     deleteUser: async (id: string): Promise<void> => {
         await api.delete(`/user/${id}`);
     },
@@ -59,4 +74,11 @@ export const userService = {
 
         return [];
     },
+
+    deleteUserImage: async (id: string): Promise<void> => {
+        await api.delete(`/user/${id}/image`);
+    },
+
+
+
 };
