@@ -1,63 +1,128 @@
-User Management Dashboard
-A modern, responsive User Management System built with React, TypeScript, and Tailwind CSS. This project features a robust modal-driven interface for creating and editing users, handling profile image uploads via multipart/form-data, and managing complex data like multi-select responsibilities and role-based access.
+# 👥 User Management Dashboard
 
-🚀 Features
-Dynamic User CRUD: Add and update users with real-time UI synchronization.
+A modern, responsive **User Management System** built with **React**, **TypeScript**, and **Tailwind CSS**. Features a clean modal-driven interface for creating and editing users, profile image uploads, multi-select responsibilities, and role-based access control.
 
-Advanced Form Handling:
+---
 
-Image upload with live preview and removal.
+## 🚀 Features
 
-Multi-checkbox selection for designations (responsibilities).
+- **Full User CRUD** — Add, edit, and delete users with real-time UI sync
+- **Smart Form Handling**
+  - Profile image upload with live preview and deletion (with confirmation)
+  - Multi-checkbox selection for designations / responsibilities
+  - Validation for name, email, phone, and required fields
+- **API Integration via Axios** — Centralized instance with request/response interceptors
+- **Global State** — Zustand for auth and shared state management
+- **Toast Notifications** — User feedback via Sonner
+- **Fully Responsive** — Seamless experience across mobile, tablet, and desktop
 
-Validation for phone numbers, emails, and required fields.
+---
 
-Tech Stack Integration:
+## 🛠️ Tech Stack
 
-Zustand: For global authentication and state management.
+| Technology | Purpose |
+|---|---|
+| **React** | UI framework |
+| **TypeScript** | Type safety |
+| **Tailwind CSS** | Styling & responsive design |
+| **Axios** | HTTP client & API layer |
+| **Zustand** | Global state management |
+| **Lucide React** | Icon library |
+| **Sonner** | Toast notifications |
+| **Vite** | Build tool & dev server |
 
-Axios: Centralized API configuration with request/response interceptors.
+---
 
-Lucide React: For a clean, modern iconography.
+## ⚙️ Installation
 
-Sonner: Toast notifications for user feedback.
+**1. Clone the repository**
 
-Responsive Design: Built using Tailwind CSS for a seamless experience across mobile, tablet, and desktop.
-
-🛠️ Installation
-Clone the repository
-
-Bash
+```bash
 git clone https://github.com/your-username/your-repo-name.git
 cd your-repo-name
-Install dependencies
+```
 
-Bash
+**2. Install dependencies**
+
+```bash
 npm install
-Environment Setup
-Create a .env file in the root directory and add your API URL:
+```
 
-Code snippet
+**3. Environment setup**
+
+Create a `.env` file in the root directory:
+
+```env
 VITE_API_URL=http://your-backend-api.com/api
-Start the development server
+```
 
-Bash
+**4. Start the development server**
+
+```bash
 npm run dev
-📂 Project Structure
+```
 
-Plaintext
-src
-components/       # Reusable UI components (Modal, Input, Button)
-services/         # API service layers (userService.ts)
-pages/            # Each page component (folder per page)
-store/            # State management (useAuthStore.ts)
-types/            # TypeScript interfaces/types
-lib/              # Utility functions (cn for Tailwind merging)
-api/              # Axios instance and interceptors
-🔌 API Integration
-The project uses a centralized Axios instance located in src/api/api.ts.
+---
 
-Interceptors
-Request: Automatically attaches the Authorization Bearer token and company_id from the Zustand store. It dynamically handles multipart/form-data by ensuring headers are set correctly for FormData objects.
+## 📂 Project Structure
 
-Response: Standardizes error handling and catches custom backend status flags.
+```
+src/
+├── api/              # Axios instance and interceptors
+├── components/       # Reusable UI components (Modal, Input, Button, ConfirmModal)
+├── pages/            # Page-level components (one folder per page)
+├── services/         # API service layers (userService.ts)
+├── store/            # Zustand state management (useAuthStore.ts)
+├── types/            # TypeScript interfaces and types
+└── lib/              # Utility functions (cn for Tailwind class merging)
+```
+
+---
+
+## 🔌 API Integration
+
+All requests go through a centralized Axios instance at `src/api/api.ts`.
+
+### Interceptors
+
+**Request interceptor** automatically:
+- Attaches the `Authorization: Bearer <token>` header from Zustand store
+- Injects the `company_id` into every request
+- Handles `multipart/form-data` headers dynamically for `FormData` payloads
+
+**Response interceptor** handles:
+- Standardized error formatting
+- Custom backend `status` flag detection
+
+### Key Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/user` | Fetch all users |
+| `GET` | `/user/:id` | Fetch single user |
+| `POST` | `/user` | Create new user |
+| `POST` | `/user/:id` *(+ `_method: PUT`)* | Update user |
+| `DELETE` | `/user/:id` | Delete user |
+| `DELETE` | `/user/:id/image` | Delete user profile image |
+
+---
+
+## 📋 Form Data Structure
+
+When creating or updating a user, data is sent as `multipart/form-data`:
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | `string` | Required |
+| `email` | `string` | Required, validated |
+| `role` | `string` | Role ID, required |
+| `title` | `string` | Job title |
+| `phone` | `string` | 10–15 digits |
+| `initials` | `string` | e.g. `JD` |
+| `responsibilities` | `JSON string` | e.g. `["id1", "id2"]` |
+| `overwrite_data` | `0` or `1` | `0` for create, `1` for update |
+| `user_picture` | `File` | Optional image upload |
+| `_method` | `PUT` | Edit mode only (method spoofing) |
+
+---
+
