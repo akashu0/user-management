@@ -54,11 +54,9 @@ const LoginPage = () => {
             className="min-h-screen flex flex-col items-center justify-center p-6 bg-cover bg-center bg-no-repeat font-poppins"
             style={{ backgroundImage: `url(${bannerImage})` }}
         >
-            <div className="absolute top-20 text-white font-bold text-5xl tracking-widest opacity-90">
-                LOGO
-            </div>
 
-            <div className="w-full max-w-[440px] bg-white/10 backdrop-blur-2xl rounded-[2rem] shadow-2xl p-12 border border-white/20">
+
+            <div className="w-full max-w-[440px] bg-white/10 backdrop-blur-2xl rounded-4xl shadow-2xl p-12 border border-white/20">
                 <div className="mb-10 text-left">
                     <h3 className="text-3xl font-semibold text-white">Sign in</h3>
                     <p className="text-white mt-1 text-xs">Log in to manage your account</p>
