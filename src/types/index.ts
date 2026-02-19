@@ -8,7 +8,6 @@ interface Role {
 
 
 export interface User {
-
     id: string;
     name: string;
     email: string;
@@ -23,6 +22,17 @@ export interface User {
     profile_image_url?: null;
     user_picture: null;
     responsibilities: never[];
+}
+export interface UserList {
+    id: string;
+    name: string;
+    email: string;
+    initials: string;
+    phoneNumber: string;
+    role: string;
+    status: boolean;
+    title: string;
+
 }
 
 

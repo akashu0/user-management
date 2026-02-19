@@ -14,13 +14,13 @@ import {
 import Button from '../components/common/Button';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { userService } from '../services/userService';
-import type { User } from '../types';
+import type { UserList } from '../types';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import UserFormModal from '../components/UserFormModal';
 
 const UserManagementPage = () => {
-    const [users, setUsers] = useState<User[]>([]);
+    const [users, setUsers] = useState<UserList[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState("all");
@@ -118,7 +118,7 @@ const UserManagementPage = () => {
         }
     };
 
-    const columns = useMemo<ColumnDef<User>[]>(() => [
+    const columns = useMemo<ColumnDef<UserList>[]>(() => [
         { accessorKey: 'name' },
         { accessorKey: 'email' },
         { accessorKey: 'initials' },
@@ -220,7 +220,7 @@ const UserManagementPage = () => {
                                     <div className="col-span-2 text-sm text-gray-500 font-medium line-clamp-1 break-all pr-2" title={user.email}>{user.email}</div>
                                     <div className="col-span-1 text-sm text-gray-500 font-medium">{user.initials || '--'}</div>
                                     <div className="col-span-2 text-sm text-gray-500 font-medium">{user.phoneNumber || '--'}</div>
-                                    <div className="col-span-1 text-sm font-medium text-gray-500 tracking-tight">{user.role?.title || '--'}</div>
+                                    <div className="col-span-1 text-sm font-medium text-gray-500 tracking-tight">{user?.role || '--'}</div>
                                     <div className="col-span-1">
                                         <button
                                             onClick={() => handleToggleStatus(user.id, user.status)}

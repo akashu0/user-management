@@ -1,8 +1,8 @@
 import api from './api'; // Your axios instance
-import type { User } from '../types';
+import type { User, UserList } from '../types';
 
 export const userService = {
-    getUsers: async (status: any = "all"): Promise<User[]> => {
+    getUsers: async (status: any = "all"): Promise<UserList[]> => {
         // Build params object
 
         const response = await api.get('/user', {
@@ -17,8 +17,7 @@ export const userService = {
             email: u.email,
             initials: u.initials || u.first_name?.charAt(0) || '?',
             phoneNumber: u.phone,
-            role: u.role?.title || 'No Role',
-            role_id: u.role?.id || 'No Role',
+            role: u.role.title || 'No Role',
             status: u.status,
             title: u.title || '--'
         }));
