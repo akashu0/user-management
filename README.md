@@ -44,15 +44,16 @@ Start the development server
 Bash
 npm run dev
 📂 Project Structure
+
 Plaintext
-src/
-├── components/       # Reusable UI components (Modal, Input, Button)
-├── services/         # API service layers (userService.ts)
-├── pages/            # Each page component (folder per page)
-├── store/            # State management (useAuthStore.ts)
-├── types/            # TypeScript interfaces/types
-├── lib/              # Utility functions (cn for Tailwind merging)
-└── api/              # Axios instance and interceptors
+src
+components/       # Reusable UI components (Modal, Input, Button)
+services/         # API service layers (userService.ts)
+pages/            # Each page component (folder per page)
+store/            # State management (useAuthStore.ts)
+types/            # TypeScript interfaces/types
+lib/              # Utility functions (cn for Tailwind merging)
+api/              # Axios instance and interceptors
 🔌 API Integration
 The project uses a centralized Axios instance located in src/api/api.ts.
 
